@@ -6,7 +6,9 @@ from weixin.models import AppToken, MyUser
 
 
 EXPIRES_THRESHOLD = 600
-
+QR_SCENE = 'QR_SCENE'
+QR_LIMIT_SCENE = 'QR_LIMIT_SCENE'
+QR_LIMIT_STR_SCENE = 'QR_LIMIT_STR_SCENE'
 class WeixinApp(object):
     '''
     classdocs
@@ -87,9 +89,23 @@ class WeixinApp(object):
             myuser.save()
         except:
             raise
-     
+        
+
+    def create_qrcode(self, scene_id, expire_seconds = 1800, action_name = QR_SCENE):
+        ret = self.weixin_api.create_qrcode(scene_id, expire_seconds, action_name)
+        return ret['ticket']
+    
+    def show_qrcode(self, ticket):
+        return self.weixin_api.show_qrcode(ticket)
             
 if __name__ == '__main__':
     weixin_app = WeixinApp('wx8f03130da7bf76f3')
 #     weixin_app.pull_user_all()
-    weixin_app.update_user_info('oLegyxNZ__ScW6uQ1aJ7zEkWyb-c')    
+#     weixin_app.update_user_info('oLegyxNZ__ScW6uQ1aJ7zEkWyb-c')    
+    ticket = weixin_app.create_qrcode(123, action_name = 'QR_LIMIT_SCENE')
+    print ticket
+
+    print weixin_app.show_qrcode(ticket)
+    
+    
+    
