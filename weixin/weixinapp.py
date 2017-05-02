@@ -13,8 +13,6 @@ class WeixinApp(object):
     '''
     classdocs
     '''
-
-
     def __init__(self, appid):
         '''
         Constructor
@@ -66,12 +64,13 @@ class WeixinApp(object):
         return info
     
     def update_user_info(self, openid):
+        info = self.pull_user_info(openid)
+        tmp_subscribe_time = info['subscribe_time']
+        # tmp_subscribe_time 时间戳格式
+#         print tmp_subscribe_time
+        subscribe_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tmp_subscribe_time))
         try:
             myuser = MyUser.objects.get(openid = openid)
-            info = self.pull_user_info(openid)
-            tmp_subscribe_time = info['subscribe_time']
-            subscribe_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(tmp_subscribe_time))
-            print subscribe_time
             myuser.nickname = info['nickname']
             myuser.subscribe = info['subscribe']
             myuser.sex = info['sex']
@@ -87,8 +86,26 @@ class WeixinApp(object):
                 myuser.unionid = info['unionid']
             myuser.update_time = datetime.now()
             myuser.save()
-        except:
-            raise
+        except MyUser.DoesNotExist:
+            myuser = MyUser.objects.create(
+                openid = openid,
+                nickname = info['nickname'],
+                subscribe = info['subscribe'],
+                sex = info['sex'],
+                city = info['city'],
+                country = info['country'],
+                province = info['province'],
+                language = info['language'],
+                headimgurl = info['headimgurl'],
+                subscribe_time = subscribe_time,
+                remark = info['remark'],
+                groupid = info['groupid'],
+                update_time = datetime.now()
+                )
+            if info.has_key('unionid'):
+                myuser.unionid = info['unionid']
+            myuser.save()
+            
         
 
     def create_qrcode(self, scene_id, expire_seconds = 1800, action_name = QR_SCENE):
@@ -100,12 +117,14 @@ class WeixinApp(object):
             
 if __name__ == '__main__':
     weixin_app = WeixinApp('wx8f03130da7bf76f3')
-#     weixin_app.pull_user_all()
-#     weixin_app.update_user_info('oLegyxNZ__ScW6uQ1aJ7zEkWyb-c')    
-    ticket = weixin_app.create_qrcode(123, action_name = 'QR_LIMIT_SCENE')
-    print ticket
+    user_list = weixin_app.pull_user_all()
+    print user_list
+    for openid in user_list:
+        weixin_app.update_user_info(openid)    
+#     ticket = weixin_app.create_qrcode(123, action_name = 'QR_LIMIT_SCENE')
+#     print ticket
 
-    print weixin_app.show_qrcode(ticket)
+#     print weixin_app.show_qrcode(ticket)
     
     
     
